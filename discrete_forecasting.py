@@ -125,16 +125,15 @@ class Random_Grid_Search:
             self.pk_cont.append(p_k)
 
     def gener_orig(self, p_range, or_points):  # 递归产生边界点
-        if len(p_range) == 0:
+        if not p_range:  # 如果p_range中已没有参数范围
             return or_points
         else:
             pa = p_range.pop()
-            if or_points == []:
-                orig_points = [[pa[0]], [pa[1]]]  # 初始化,排除orig_points为空的情形
+            if not or_points:  # 如果or_points中无参数
+                or_points = [[pa[0]], [pa[1]]]  # 初始化,排除orig_points为空的情形
             else:
-                orig_points = [[pa[0]] + x for x in self.orig_points] + [[pa[1]] + x for x in or_points]  # 二分裂
-
-            return self.gener_orig(p_range, orig_points)
+                or_points = [[pa[0]] + x for x in or_points] + [[pa[1]] + x for x in or_points]  # 二分裂
+            return self.gener_orig(p_range, or_points)
 
     def sample(self, c_range):  # 抽样参数点
         p_list = []

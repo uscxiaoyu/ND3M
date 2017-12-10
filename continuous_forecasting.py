@@ -72,18 +72,16 @@ class Random_Grid_Search:
         self.para_range = [[1e-6, 0.1], [1e-3 / d, 1 / d], [sum(s), 5 * sum(s)]]  # 参数范围
         self.p_range = [[1e-6, 0.1], [1e-3 / d, 1 / d], [sum(s), 5 * sum(s)]]  # 用于产生边界节点的参数范围
 
-    def gener_orig(self):  # 递归产生边界点
-        if len(self.p_range) == 0:
-            return
+    def gener_orig(self, p_range, or_points):  # 递归产生边界点
+        if not p_range:  # 如果p_range中已没有参数范围
+            return or_points
         else:
-            pa = self.p_range[-1]
-            if self.orig_points == []:
-                self.orig_points = [[pa[0]], [pa[1]]]  # 初始化,排除orig_points为空的情形
+            pa = p_range.pop()
+            if not or_points:  # 如果or_points中无参数
+                or_points = [[pa[0]], [pa[1]]]  # 初始化,排除orig_points为空的情形
             else:
-                self.orig_points = [[pa[0]] + x for x in self.orig_points] + [[pa[1]] + x for x in
-                                                                              self.orig_points]  # 二分裂
-            self.p_range.pop()
-            return self.gener_orig()
+                or_points = [[pa[0]] + x for x in or_points] + [[pa[1]] + x for x in or_points]  # 二分裂
+            return self.gener_orig(p_range, or_points)
 
     def sample(self, c_range):  # 抽样参数点
         p_list = []
