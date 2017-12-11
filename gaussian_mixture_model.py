@@ -196,3 +196,5 @@ if __name__ == '__main__':
     gmm = GMM(s, m)
     res = gmm.excep_max()
     print u'完成，一共用时%d秒'%(time.clock() - t1)
+
+
