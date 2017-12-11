@@ -1,3 +1,4 @@
+#for python2.7
 #coding=utf-8
 from __future__ import division
 from numpy import exp,pi,sqrt,log
@@ -212,3 +213,5 @@ if __name__ == '__main__':
     gmm = GMM(s, m)
     res = gmm.excep_max(threshold=1e-7)
     print u'完成，一共用时%d秒'%(time.clock() - t1)
+
+
