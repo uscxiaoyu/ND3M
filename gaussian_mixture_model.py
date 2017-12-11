@@ -1,3 +1,4 @@
+#for python2.7
 #coding=utf-8
 from __future__ import division
 from numpy import exp,pi,sqrt,log
