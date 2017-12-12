@@ -2,7 +2,7 @@
 #coding=utf-8
 from __future__ import division
 from numpy import exp,pi,sqrt,log
-from scipy.optimize import minimize, root
+from scipy.optimize import minimize, root, differential_evolution
 import matplotlib.pyplot as plt
 import numpy as np
 import time
@@ -97,7 +97,8 @@ class GMM:  # gaussian mixture model
 
     def optima_search1(self):  # 针对(p, q, c)优化
         bounds = ((1e-4, 0.1), (0.001, 1), (0.1, 0.99))
-        sol = minimize(self.neg_loglike1, self.x, bounds=bounds, method='SLSQP')
+        #sol = minimize(self.neg_loglike1, self.x, bounds=bounds, method='SLSQP')
+        sol = differential_evolution(self.neg_loglike1, bounds=bounds)
         self.x = np.array(sol.x)
         return sol.fun  # [neg_loglike, p, q, c]
 
@@ -118,13 +119,14 @@ class GMM:  # gaussian mixture model
 
     def excep_max(self, threshold=1e-8):
         flag, run = 1, 1
-        res_cont = []
+        self.optima_search1()
+        res2 = self.optima_search2()
+        res_cont = [res2]
         while flag > threshold:
-            res1 = self.optima_search1()  # Exceptation
-            res_cont.append(res1)
+            self.optima_search1()  # Exceptation
             res2 = self.optima_search2()  # Maximization
             res_cont.append(res2)
-            flag = abs(res_cont[-1] - res_cont[-2]) / res_cont[-1]
+            flag = abs(res_cont[-2] - res_cont[-1]) / res_cont[-1]
             print('EM---%d:{%.2f, %.2f}' % (run, res_cont[-2], res_cont[-1]), 'Flag: %.2e' % flag)
             run += 1
 
@@ -146,16 +148,17 @@ if __name__ == '__main__':
     m = np.sum(s) * 2
     gmm = GMM(s, m)
     gmm.p_list = 0.25 * np.ones(4)  # 设定p_list的初值
-    gmm.x = np.array([0.002, 0.2, 0.2])  # np.array([0.001, 0.05, 0.4]) for room air conditionrs #  设定(p, q, c)的初值
+    gmm.x = np.array([0.001, 0.5, 0.1])  # np.array([0.001, 0.05, 0.4]) for room air conditionrs #  设定(p, q, c)的初值
     # 优化
     res = gmm.excep_max(threshold=1e-7)
     print('-Loglikelihood: %.2f' % res[0], 'p:%.4f, q:%.4f, c:%.4f' % tuple(res[1]),
           'Ba: %.4f, Gauss: %.4f, Logno:%.4f, Expon:%.4f' % tuple(res[2]), sep='\n')
     print(u'完成，一共用时%d秒'%(time.clock() - t1))
+    '''
     # 绘图
     diff_curve = gmm.mix_func(gmm.x, gmm.p_list) * m
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(diff_curve, 'k-', lw=1.5)
     ax.plot(s, 'ro', ms=8, alpha=0.5)
-    plt.show()
+    plt.show()'''
