@@ -1,9 +1,9 @@
-#for python2.7
+#for python3
 #coding=utf-8
 from __future__ import division
 from numpy import exp,pi,sqrt,log
 from scipy.optimize import minimize, root
-from copy import deepcopy
+import matplotlib.pyplot as plt
 import numpy as np
 import time
 
@@ -49,65 +49,22 @@ class Gener_PK:
         return p_k
 
 
-class Random_Grid_Search:
-
-    def __init__(self, s, m, p_list, k_list=np.arange(1,50), t_n=500):  # 初始化实例参数
-        self.s, self.s_len = np.array(s), len(s)
-        self.m = m
-        self.k_list = k_list
-        self.para_range = [[1e-6, 0.1], [1e-4, 0.9], [0.1, 0.9]]  # p, q, c 参数范围
-        self.p_list = p_list  # 各网络的权重
-        self.t_n = t_n
-        self.pk_cont = []
-        for i in [0, 1, 2, 3]:
-            gener_pk = Gener_PK(d=6, g=i, k_list=self.k_list)
-            pk = gener_pk.get_pk()
-            self.pk_cont.append(pk)
-
-    def func(self, g, x):
-        pk = self.pk_cont[g]
-        p, q, c = x  # c为最终累积扩散率
-        inst_diff = np.zeros(self.s_len, dtype=np.float64)  # 非累积扩散率
-        f = np.zeros_like(self.k_list, dtype=np.float64)
-        theta = 0
-        for i in range(self.s_len):
-            delta_f = c * (1 - f) * (1 - (1 - p) * (1 - q) ** (self.k_list * theta))  # 各k对应的采纳率增长
-            inst_diff[i] = np.dot(delta_f, pk)  # 添加i+1时间步下的总采纳率增长
-            f = f + delta_f  # 各k对应的采纳率
-            theta = np.sum(self.k_list * pk * f) / np.dot(pk, self.k_list)  # 计算平均影响率
-        return inst_diff
-
-    def mix_func(self, x):
-        diff_cont = np.array([self.func(g, x) for g in range(4)])
-        return np.average(diff_cont, axis=0, weights=self.p_list)  # 期望扩散率
-
-    def neg_loglike(self, x):  # S为现实扩散数据, m为群体数量
-        ins = self.mix_func(x)
-        if sum(ins) <= 0 or sum(ins) >= 1:
-            return np.inf
-        else:
-            return - (self.m - sum(self.s)) * log(1 - sum(ins)) - np.dot(self.s, log(ins))
-
-    def optima_search(self):
-        bounds = ((1e-4, 0.1), (0.001, 1), (0.1, 0.99))
-        sol = minimize(self.neg_loglike, np.array([0.005, 0.1, 0.4]), bounds=bounds, method='SLSQP')
-        print sol.fun, sol.x
-        return [sol.fun] + list(sol.x)  # [neg_loglike, p, q, c]
-
-
 class GMM:  # gaussian mixture model
+
     def __init__(self, s, m, k_list=np.arange(1, 50)):
         self.s = s
         self.s_len = len(s)
         self.m = m
         self.k_list = k_list
         self.pk_cont = []
+        self.p_list = 0.25 * np.ones(4)
+        self.x = np.array([0.001, 0.1, 0.5])
         for i in [0, 1, 2, 3]:
             gener_pk = Gener_PK(d=6, g=i, k_list=self.k_list)
             pk = gener_pk.get_pk()
             self.pk_cont.append(pk)
 
-    def func(self, g, x):
+    def func(self, x, g):
         p, q, c = x  # c为最终累积扩散率
         pk = self.pk_cont[g]
         inst_diff = np.zeros(self.s_len, dtype=np.float64)  # 非累积扩散率
@@ -120,48 +77,58 @@ class GMM:  # gaussian mixture model
             theta = np.sum(self.k_list * pk * f) / np.dot(pk, self.k_list)  # 计算平均影响率
         return inst_diff
 
-    def mix_func(self, p_list, x):
-        diff_cont = np.array([self.func(g, x) for g in range(4)])
+    def mix_func(self, x, p_list):
+        diff_cont = np.array([self.func(x, g) for g in range(4)])
         return np.average(diff_cont, axis=0, weights=p_list)  # 期望扩散率
 
-    def neg_loglike(self, p_list, params=[0.005, 0.05, 0.5]):  # S为现实扩散数据,m为群体数量
-        ins = self.mix_func(p_list, x=params)
+    def neg_loglike1(self, x):  # 负对数似然函数, 以(p, q, c)作为参数
+        ins = self.mix_func(x, self.p_list)
         if sum(ins) <= 0 or sum(ins) >= 1:
             return np.inf
         else:
             return - (self.m - sum(self.s)) * log(1 - sum(ins)) - np.dot(self.s, log(ins))
 
-    def excep_max(self, threshold=1e-8):
-        p_list = np.array([0.25, 0.25, 0.25, 0.25])  # 初始化
-        # 定义约束条件
-        cons = ({'type':'eq', 'fun':lambda x:np.sum(x)-1},
-                {'type':'ineq', 'fun':lambda x:x[0]},
-                {'type':'ineq', 'fun':lambda x:1 - x[0]},
-                {'type':'ineq', 'fun':lambda x:x[1]},
-                {'type':'ineq', 'fun':lambda x:1 - x[1]},
-                {'type':'ineq', 'fun':lambda x:x[2]},
-                {'type':'ineq', 'fun':lambda x:1 - x[2]},
-                {'type':'ineq', 'fun':lambda x:x[3]},
-                {'type':'ineq', 'fun':lambda x:1 - x[3]})
+    def neg_loglike2(self, p_list):  # 负对数似然函数, 以p_list作为参数
+        ins = self.mix_func(self.x, p_list)
+        if sum(ins) <= 0 or sum(ins) >= 1:
+            return np.inf
+        else:
+            return - (self.m - sum(self.s)) * log(1 - sum(ins)) - np.dot(self.s, log(ins))
 
-        rgs = Random_Grid_Search(self.s, self.m, p_list, k_list=self.k_list, t_n=500)
-        flag = 1
-        run = 1
+    def optima_search1(self):  # 针对(p, q, c)优化
+        bounds = ((1e-4, 0.1), (0.001, 1), (0.1, 0.99))
+        sol = minimize(self.neg_loglike1, self.x, bounds=bounds, method='SLSQP')
+        self.x = np.array(sol.x)
+        return sol.fun  # [neg_loglike, p, q, c]
+
+    def optima_search2(self):  # 针对p_list优化
+        cons = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1},
+                {'type': 'ineq', 'fun': lambda x: x[0]},
+                {'type': 'ineq', 'fun': lambda x: 1 - x[0]},
+                {'type': 'ineq', 'fun': lambda x: x[1]},
+                {'type': 'ineq', 'fun': lambda x: 1 - x[1]},
+                {'type': 'ineq', 'fun': lambda x: x[2]},
+                {'type': 'ineq', 'fun': lambda x: 1 - x[2]},
+                {'type': 'ineq', 'fun': lambda x: x[3]},
+                {'type': 'ineq', 'fun': lambda x: 1 - x[3]})
+
+        sol = minimize(self.neg_loglike2, self.p_list, constraints=cons, method='SLSQP')
+        self.p_list = np.array(sol.x)
+        return sol.fun  # [neg_loglike, p, q, c]
+
+    def excep_max(self, threshold=1e-8):
+        flag, run = 1, 1
         res_cont = []
         while flag > threshold:
-            # Exceptation
-            rgs.p_list = p_list
-            res1 = rgs.optima_search()
-            res_cont.append(res1 + [list(p_list)])
-            params = res1[1:]
-            # Maximization
-            res2 = minimize(self.neg_loglike, p_list, args=(params,), constraints=cons, method='SLSQP')
-            p_list = np.array(res2.x)
-            res_cont.append([res2.fun] + params + [list(p_list)])
-            flag = abs(res_cont[-1][0] - res_cont[-2][0]) / res_cont[-1][0]
-            print '%d: {negtive loglikelihood:%.2f, flag:%.4e}' % (run, res_cont[-1][0], flag)
+            res1 = self.optima_search1()  # Exceptation
+            res_cont.append(res1)
+            res2 = self.optima_search2()  # Maximization
+            res_cont.append(res2)
+            flag = abs(res_cont[-1] - res_cont[-2]) / res_cont[-1]
+            print('EM---%d:{%.2f, %.2f}' % (run, res_cont[-2], res_cont[-1]), 'Flag: %.2e' % flag)
             run += 1
-        return res_cont[-1]
+
+        return res_cont[-1], self.x, self.p_list
 
 if __name__ == '__main__':
     data_set = {'room air conditioners': (np.arange(1949, 1962), [96, 195, 238, 380, 1045, 1230, 1267, 1828, 1586, 1673, 1800, 1580, 1500]),
@@ -175,12 +142,20 @@ if __name__ == '__main__':
                  'mobile phone': (np.arange(1997, 2013), [1.7, 1.6, 3.84, 12.36, 14.5, 28.89, 27.18, 21.33, 25.6, 15.88, 12.3, 6.84, 9.02, 7.82, 16.39, 7.39])}
 
     t1 = time.clock()
-    s = data_set['clothers dryers'][1]
+    s = data_set['color televisions'][1]
     m = np.sum(s) * 2
-    k_list = np.arange(1, 50)
-    ini_values = [0.001, 0.1, 0.5, 6, 0]
     gmm = GMM(s, m)
+    gmm.p_list = 0.25 * np.ones(4)  # 设定p_list的初值
+    gmm.x = np.array([0.002, 0.2, 0.2])  # np.array([0.001, 0.05, 0.4]) for room air conditionrs #  设定(p, q, c)的初值
+    # 优化
     res = gmm.excep_max(threshold=1e-7)
-    print u'完成，一共用时%d秒'%(time.clock() - t1)
-
-
+    print('-Loglikelihood: %.2f' % res[0], 'p:%.4f, q:%.4f, c:%.4f' % tuple(res[1]),
+          'Ba: %.4f, Gauss: %.4f, Logno:%.4f, Expon:%.4f' % tuple(res[2]), sep='\n')
+    print(u'完成，一共用时%d秒'%(time.clock() - t1))
+    # 绘图
+    diff_curve = gmm.mix_func(gmm.x, gmm.p_list) * m
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_subplot(1, 1, 1)
+    ax.plot(diff_curve, 'k-', lw=1.5)
+    ax.plot(s, 'ro', ms=8, alpha=0.5)
+    plt.show()
