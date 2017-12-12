@@ -33,14 +33,14 @@ class Gener_PK:
 
     def get_pk(self):
         if self.g == 1:
-            sol = root(self.gauss, [6, 1], args=(), method='lm')
+            sol = root(self.gauss, np.array([6, 1]), args=(), method='lm')
             p_k = self.c * exp(-(self.k_list - sol.x[0]) ** 2 / (2 * sol.x[1] ** 2)) / (sol.x[1] * sqrt(2 * pi))
         elif self.g == 2:
-            sol = root(self.logno, [5, 2], args=(), method='lm')
+            sol = root(self.logno, np.array([5, 2]), args=(), method='lm')
             p_k = self.c * exp(-(log(self.k_list) - sol.x[0]) ** 2 / (2 * sol.x[1] ** 2)) / (
             self.k_list * sol.x[1] * sqrt(2 * pi))
         elif self.g == 3:
-            sol = root(self.expon, [0.5, 1.1], args=(), method='lm')
+            sol = root(self.expon, np.array([0.5, 1.1]), args=(), method='lm')
             p_k = sol.x[1] * exp(-self.k_list * sol.x[0])
         elif self.g == 0:
             p_k = np.zeros_like(self.k_list)
@@ -96,7 +96,7 @@ class GMM:  # gaussian mixture model
             return - (self.m - sum(self.s)) * log(1 - sum(ins)) - np.dot(self.s, log(ins))
 
     def optima_search1(self):  # 针对(p, q, c)优化
-        bounds = ((1e-4, 0.1), (0.001, 1), (0.1, 0.99))
+        bounds = ((1e-4, 0.1), (0.001, 1), (0.01, 0.9))
         #sol = minimize(self.neg_loglike1, self.x, bounds=bounds, method='SLSQP')
         sol = differential_evolution(self.neg_loglike1, bounds=bounds)
         self.x = np.array(sol.x)
@@ -117,20 +117,22 @@ class GMM:  # gaussian mixture model
         self.p_list = np.array(sol.x)
         return sol.fun  # [neg_loglike, p, q, c]
 
-    def excep_max(self, threshold=1e-8):
-        flag, run = 1, 1
+    def excep_max(self, iters=50, threshold=1e-6):
         self.optima_search1()
         res2 = self.optima_search2()
-        res_cont = [res2]
-        while flag > threshold:
+        res_cont = [(res2, self.x, self.p_list)]
+        for i in range(iters):
             self.optima_search1()  # Exceptation
             res2 = self.optima_search2()  # Maximization
-            res_cont.append(res2)
-            flag = abs(res_cont[-2] - res_cont[-1]) / res_cont[-1]
-            print('EM---%d:{%.2f, %.2f}' % (run, res_cont[-2], res_cont[-1]), 'Flag: %.2e' % flag)
-            run += 1
+            res_cont.append((res2, self.x, self.p_list))
+            flag = abs(res_cont[-2][0] - res_cont[-1][0]) / res_cont[-1][0]
+            print('EM---%d:{%.2f, %.2f}' % (i+1, res_cont[-2][0], res_cont[-1][0]), 'Flag: %.2e' % flag)
+            if flag < threshold:
+                break
+        else:
+            print('Iteration exceeds 50!')
 
-        return res_cont[-1], self.x, self.p_list
+        return sorted(res_cont)[0]
 
 if __name__ == '__main__':
     data_set = {'room air conditioners': (np.arange(1949, 1962), [96, 195, 238, 380, 1045, 1230, 1267, 1828, 1586, 1673, 1800, 1580, 1500]),
@@ -143,14 +145,16 @@ if __name__ == '__main__':
     china_set = {'color tv': (np.arange(1997, 2013),[2.6, 1.2, 2.11, 3.79, 3.6, 7.33, 7.18, 5.29, 8.42, 5.68, 6.57, 5.49, 6.48, 5.42, 10.72, 5.15]),
                  'mobile phone': (np.arange(1997, 2013), [1.7, 1.6, 3.84, 12.36, 14.5, 28.89, 27.18, 21.33, 25.6, 15.88, 12.3, 6.84, 9.02, 7.82, 16.39, 7.39])}
 
+    m_cont = {'clothers dryers': 15960, 'room air conditioners':17581, 'color televisions':38619}
     t1 = time.clock()
-    s = data_set['color televisions'][1]
-    m = np.sum(s) * 2
+    txt = 'clothers dryers'
+    s = data_set[txt][1]
+    m = m_cont[txt]
     gmm = GMM(s, m)
     gmm.p_list = 0.25 * np.ones(4)  # 设定p_list的初值
-    gmm.x = np.array([0.001, 0.5, 0.1])  # np.array([0.001, 0.05, 0.4]) for room air conditionrs #  设定(p, q, c)的初值
+    gmm.x = np.array([0.001, 0.1, 0.15])  # np.array([0.001, 0.05, 0.4]) for room air conditionrs #  设定(p, q, c)的初值
     # 优化
-    res = gmm.excep_max(threshold=1e-7)
+    res = gmm.excep_max(threshold=1e-6)
     print('-Loglikelihood: %.2f' % res[0], 'p:%.4f, q:%.4f, c:%.4f' % tuple(res[1]),
           'Ba: %.4f, Gauss: %.4f, Logno:%.4f, Expon:%.4f' % tuple(res[2]), sep='\n')
     print(u'完成，一共用时%d秒'%(time.clock() - t1))
