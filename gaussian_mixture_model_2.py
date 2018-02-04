@@ -58,7 +58,7 @@ class GMM:  # gaussian mixture model
         self.k_list = k_list
         self.pk_cont = []
         self.p_list = 0.25 * np.ones(4)
-        self.x = np.array([0.001, 0.1, 0.5])
+        self.x = np.array([0.05, 0.1, 0.5])
         for i in [0, 1, 2, 3]:
             gener_pk = Gener_PK(d=6, g=i, k_list=self.k_list)
             pk = gener_pk.get_pk()
@@ -86,7 +86,7 @@ class GMM:  # gaussian mixture model
         if sum(ins) <= 0 or sum(ins) >= 1:
             return np.inf
         else:
-            return - (self.m - sum(self.s)) * log(1 - sum(ins)) - np.dot(self.s, log(ins))
+            return -(self.m - sum(self.s)) * log(1 - sum(ins)) - np.dot(self.s, log(ins))
 
     def neg_loglike2(self, p_list):  # 负对数似然函数, 以p_list作为参数
         ins = self.mix_func(self.x, p_list)
@@ -97,8 +97,8 @@ class GMM:  # gaussian mixture model
 
     def optima_search1(self):  # 针对(p, q, c)优化
         bounds = ((1e-4, 0.1), (0.001, 1), (0.01, 0.9))
-        #sol = minimize(self.neg_loglike1, self.x, bounds=bounds, method='SLSQP')
-        sol = differential_evolution(self.neg_loglike1, bounds=bounds)
+        sol = minimize(self.neg_loglike1, self.x, bounds=bounds, method='SLSQP')
+        #sol = differential_evolution(self.neg_loglike1, bounds=bounds)
         self.x = np.array(sol.x)
         return sol.fun  # [neg_loglike, p, q, c]
 
@@ -132,7 +132,7 @@ class GMM:  # gaussian mixture model
         else:
             print('Iteration exceeds 50!')
 
-        return sorted(res_cont)[0]
+        return res_cont[0] if len(res_cont) == 1 else sorted(res_cont)[0]
 
 if __name__ == '__main__':
     data_set = {'room air conditioners': (np.arange(1949, 1962), [96, 195, 238, 380, 1045, 1230, 1267, 1828, 1586, 1673, 1800, 1580, 1500]),
@@ -152,17 +152,18 @@ if __name__ == '__main__':
     m = m_cont[txt]
     gmm = GMM(s, m)
     gmm.p_list = 0.25 * np.ones(4)  # 设定p_list的初值
-    gmm.x = np.array([0.001, 0.1, 0.15])  # np.array([0.001, 0.05, 0.4]) for room air conditionrs #  设定(p, q, c)的初值
+    gmm.x = np.array([0.005, 0.1, 0.48])  # np.array([0.001, 0.05, 0.4]) for room air conditionrs #  设定(p, q, c)的初值
     # 优化
     res = gmm.excep_max(threshold=1e-6)
+    print('Product: %s' % txt)
     print('-Loglikelihood: %.2f' % res[0], 'p:%.4f, q:%.4f, c:%.4f' % tuple(res[1]),
           'Ba: %.4f, Gauss: %.4f, Logno:%.4f, Expon:%.4f' % tuple(res[2]), sep='\n')
     print(u'完成，一共用时%d秒'%(time.clock() - t1))
-    '''
+
     # 绘图
     diff_curve = gmm.mix_func(gmm.x, gmm.p_list) * m
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(diff_curve, 'k-', lw=1.5)
     ax.plot(s, 'ro', ms=8, alpha=0.5)
-    plt.show()'''
+    plt.show()
