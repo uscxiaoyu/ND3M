@@ -2,10 +2,12 @@
 #coding=utf-8
 from __future__ import division
 from numpy import exp,pi,sqrt,log
-from scipy.optimize import minimize, root, differential_evolution
+from scipy.optimize import minimize, root, differential_evolution, basinhopping
 import matplotlib.pyplot as plt
 import numpy as np
 import time
+
+np.random.seed(1234)  #规定初始随机数，以使实验可重复
 
 class Gener_PK:
     c = 1.2
@@ -58,7 +60,7 @@ class GMM:  # gaussian mixture model
         self.k_list = k_list
         self.pk_cont = []
         self.p_list = 0.25 * np.ones(4)
-        self.x = np.array([0.05, 0.1, 0.5])
+        self.x = np.array([0.001, 0.1, 0.5])
         for i in [0, 1, 2, 3]:
             gener_pk = Gener_PK(d=6, g=i, k_list=self.k_list)
             pk = gener_pk.get_pk()
@@ -81,12 +83,20 @@ class GMM:  # gaussian mixture model
         diff_cont = np.array([self.func(x, g) for g in range(4)])
         return np.average(diff_cont, axis=0, weights=p_list)  # 期望扩散率
 
+    def r2(self, x, p_list):
+        a = self.mix_func(x, p_list) * self.m
+        sse = np.sum(np.square(self.s - a))
+        ave_y = np.mean(self.s)
+        ssl = np.sum(np.square(self.s - ave_y))
+        r_2 = (ssl - sse) / ssl
+        return r_2
+
     def neg_loglike1(self, x):  # 负对数似然函数, 以(p, q, c)作为参数
         ins = self.mix_func(x, self.p_list)
         if sum(ins) <= 0 or sum(ins) >= 1:
             return np.inf
         else:
-            return -(self.m - sum(self.s)) * log(1 - sum(ins)) - np.dot(self.s, log(ins))
+            return - (self.m - sum(self.s)) * log(1 - sum(ins)) - np.dot(self.s, log(ins))
 
     def neg_loglike2(self, p_list):  # 负对数似然函数, 以p_list作为参数
         ins = self.mix_func(self.x, p_list)
@@ -99,6 +109,7 @@ class GMM:  # gaussian mixture model
         bounds = ((1e-4, 0.1), (0.001, 1), (0.01, 0.9))
         sol = minimize(self.neg_loglike1, self.x, bounds=bounds, method='SLSQP')
         #sol = differential_evolution(self.neg_loglike1, bounds=bounds)
+        #sol = basinhopping(self.neg_loglike1, self.x)
         self.x = np.array(sol.x)
         return sol.fun  # [neg_loglike, p, q, c]
 
@@ -117,22 +128,44 @@ class GMM:  # gaussian mixture model
         self.p_list = np.array(sol.x)
         return sol.fun  # [neg_loglike, p, q, c]
 
-    def excep_max(self, iters=50, threshold=1e-6):
+    def excep_max(self, iters=20, threshold=1e-5):
         self.optima_search1()
         res2 = self.optima_search2()
         res_cont = [(res2, self.x, self.p_list)]
-        for i in range(iters):
-            self.optima_search1()  # Exceptation
-            res2 = self.optima_search2()  # Maximization
-            res_cont.append((res2, self.x, self.p_list))
-            flag = abs(res_cont[-2][0] - res_cont[-1][0]) / res_cont[-1][0]
-            print('EM---%d:{%.2f, %.2f}' % (i+1, res_cont[-2][0], res_cont[-1][0]), 'Flag: %.2e' % flag)
-            if flag < threshold:
-                break
+        if np.isnan(res2):
+            return (np.inf, self.x, self.p_list)
         else:
-            print('Iteration exceeds 50!')
+            for i in range(iters):
+                self.optima_search1()  # Exceptation
+                res2 = self.optima_search2()  # Maximization
+                res_cont.append((res2, self.x, self.p_list))
+                flag = abs(res_cont[-2][0] - res_cont[-1][0]) / res_cont[-1][0]
+                # print('EM--%d:{%.2f, %.2f}' % (i+1, res_cont[-2][0], res_cont[-1][0]), 'Flag: %.2e' % flag)
+                if flag < threshold:
+                    break
+            else:
+                print('Iteration exceeds %s!' % iters)
 
-        return res_cont[0] if len(res_cont) == 1 else sorted(res_cont)[0]
+            return sorted(res_cont)[0]
+
+def mul_samp(s, m, num_samp=50):
+    gmm = GMM(s, m)
+    ini_rand = np.random.random(3 * num_samp).reshape(num_samp, 3)  #随机生成num_samp个0~1的数
+    ini_rand[:, 0] = ini_rand[:, 0] * 5e-2  # p
+    ini_rand[:, 1] = ini_rand[:, 1] * 0.8 + 0.01  # q
+    sol_cont = []
+    for i, x in enumerate(ini_rand):
+        gmm.x = x
+        gmm.p_list = 0.25 * np.ones(4)
+        try:
+            res = gmm.excep_max(threshold=1e-5)
+            sol_cont.append(res)
+            print(i, 'OK')
+        except:
+            print(i, 'Invalid!')
+
+    return sol_cont
+
 
 if __name__ == '__main__':
     data_set = {'room air conditioners': (np.arange(1949, 1962), [96, 195, 238, 380, 1045, 1230, 1267, 1828, 1586, 1673, 1800, 1580, 1500]),
@@ -147,23 +180,24 @@ if __name__ == '__main__':
 
     m_cont = {'clothers dryers': 15960, 'room air conditioners':17581, 'color televisions':38619}
     t1 = time.clock()
-    txt = 'clothers dryers'
+    txt = 'color televisions'
     s = data_set[txt][1]
     m = m_cont[txt]
+    t1 = time.clock()
+    sol = mul_samp(s, m, num_samp=20)
+    res = sorted(sol)[0]
     gmm = GMM(s, m)
-    gmm.p_list = 0.25 * np.ones(4)  # 设定p_list的初值
-    gmm.x = np.array([0.005, 0.1, 0.48])  # np.array([0.001, 0.05, 0.4]) for room air conditionrs #  设定(p, q, c)的初值
-    # 优化
-    res = gmm.excep_max(threshold=1e-6)
-    print('Product: %s' % txt)
-    print('-Loglikelihood: %.2f' % res[0], 'p:%.4f, q:%.4f, c:%.4f' % tuple(res[1]),
+    r2 = gmm.r2(res[1], res[2])
+    print('CASE:%s' % txt)
+    print('-Loglikelihood: %.2f' % res[0], 'r2:%.4f' % r2, 'p:%.4f, q:%.4f, c:%.4f' % tuple(res[1]),
           'Ba: %.4f, Gauss: %.4f, Logno:%.4f, Expon:%.4f' % tuple(res[2]), sep='\n')
-    print(u'完成，一共用时%d秒'%(time.clock() - t1))
+    print('Time elapsed: %2.f s'%(time.clock() - t1))
 
     # 绘图
-    diff_curve = gmm.mix_func(gmm.x, gmm.p_list) * m
+    diff_curve = gmm.mix_func(res[1], res[2]) * m
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(diff_curve, 'k-', lw=1.5)
     ax.plot(s, 'ro', ms=8, alpha=0.5)
+    ax.text(0.1, 0.8 * np.max(diff_curve), '$r^2=%.4f$' % r2)
     plt.show()
