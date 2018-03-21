@@ -1,50 +1,49 @@
-#coding=gbk
-import sys
-sys.path.append('/Users/xiaoyu/PycharmProjects/ND3M')
+#coding=utf-8
 from gen_network import *
+import networkx as nx
 import time
 import matplotlib.pyplot as plt
 
-def _diffuse_(G,p,q,num_of_run=25):
-    if not G.is_directed():
-        G = G.to_directed()
+
+def _diffuse_(g, p, q, num_of_run=25):
+    if not g.is_directed():
+        g = g.to_directed()
         
-    for i in G.nodes_iter():
-        G.node[i]['state'] = False
-        G.node[i]['prede'] = G.predecessors(i)
+    for i in g:
+        g.node[i]['state'] = False
         
-    non_set = np.array(G.nodes())
+    non_set = np.array(g.nodes())
     num_of_adopt = []
-    for u in xrange(num_of_run):
-        #»ñÈ¡¸÷½ÚµãÒÑ²ÉÄÉÁÚ¾ÓÊıÁ¿
+    for u in range(num_of_run):
+        #è·å–å„èŠ‚ç‚¹å·²é‡‡çº³é‚»å±…æ•°é‡
         len_non = len(non_set)
-        influ = np.zeros(len_non)
-        for i in xrange(len_non):
-            influ[i] = len([k for k in G.node[non_set[i]].get('prede',[]) if G.node[k]['state']])
-      
-        #»ñÈ¡±¾Ê±¼ä²½²ÉÄÉÕßÊıÁ¿
-        prob = 1-(1-p)*(1-q)**influ
+        dose = np.zeros(len_non)
+        for i in range(len_non):
+            dose[i] = np.sum([1 for k in g.predecessors(non_set[i]) if g.node[k]['state']])
+        #è·å–æœ¬æ—¶é—´æ­¥é‡‡çº³è€…æ•°é‡
+        prob = 1 - (1 - p) * (1 - q) ** dose
         rand = np.random.random(len_non)
         upda = rand<=prob
         num_of_adopt.append(np.sum(upda))
-        #¸üĞÂ±¾Ê±¼ä²½ÒÑ²ÉÄÉ½ÚµãµÄ×´Ì¬
+        #æ›´æ–°æœ¬æ—¶é—´æ­¥å·²é‡‡çº³èŠ‚ç‚¹çš„çŠ¶æ€
         for i in non_set[upda]:
-            G.node[i]['state'] = True
+            g.node[i]['state'] = True
         
-        non_set = non_set[rand>prob] #¸üĞÂÎ´²ÉÄÉ½Úµã¼¯ºÏ         
+        non_set = non_set[rand > prob] #æ›´æ–°æœªé‡‡çº³èŠ‚ç‚¹é›†åˆ
     return num_of_adopt
 
 
-# ### ²úÉúËæ»úÍøÂç
-# #### 2. ÃİÂÉ·Ö²¼
+# ### äº§ç”Ÿéšæœºç½‘ç»œ
+# #### 2. å¹‚å¾‹åˆ†å¸ƒ
 # #### p:[0.001,0.021 ], q:[0.04,0.15]   21\*22
+'''
 n = 10000
 g = 'logno'
 d = 6
 k_list = np.arange(1,100)
 g_graph = gener_random_graph(n,d,k_list,g)
 G = g_graph.generate()
-print nx.number_of_nodes(G),nx.number_of_edges(G)
+print(nx.number_of_nodes(G), nx.number_of_edges(G))
 #plt.plot(g_graph.k_list,g_graph.pk_list,'o')
 
 
@@ -53,38 +52,39 @@ for p in np.arange(0.001,0.02,0.001):
     t1 = time.clock()
     for q in np.arange(0.015,0.105,0.005):
         diff_cont = []
-        for i in xrange(20):
+        for i in range(20):
             diff = _diffuse_(G,p,q,num_of_run=40)
             diff_cont.append(diff)
 
         mean_diff = np.mean(diff_cont,axis=0)
         to_save.append(np.concatenate(([p,q],mean_diff)))
         
-    print 'p:%s,time elapsed:%.2f s'%(p,time.clock()-t1)
-    print '================================'
+    print('p:%s,time elapsed:%.2f s'%(p,time.clock()-t1))
+    print('================================')
 
-np.save('C:\Users\XIAOYU\PycharmProjects\ND3M\logno_diff',to_save)
+np.save('logno_diff', to_save)
 '''
-p,q = 0.001,0.015
+g = nx.barabasi_albert_graph(10000, 3)
+p, q = 0.001, 0.05
 diff_cont = []
 t1 = time.clock()
-for i in xrange(10):
-    diff = _diffuse_(G,p,q,num_of_run=40)
+for i in range(10):
+    diff = _diffuse_(g, p, q, num_of_run=25)
     diff_cont.append(diff)
-mean_diff = np.mean(diff_cont,axis=0)
-print 'p:%s,q:%s  time elapsed:%.2f s'%(p,q,time.clock()-t1)
-print u'×î´óÖµÎ»ÖÃ£º%s'%np.argmax(mean_diff)
 
-fig = plt.figure(figsize=(8,6))
-ax = fig.add_subplot(1,1,1)
+mean_diff = np.mean(diff_cont, axis=0)
+print('p:%s,q:%s  time elapsed:%.2f s' % (p, q, time.clock() - t1))
+print(u'æœ€å¤§å€¼ä½ç½®ï¼š%s' % np.argmax(mean_diff))
+
+fig = plt.figure(figsize=(8, 6))
+ax = fig.add_subplot(1, 1, 1)
 for x in diff_cont:
-    ax.scatter(np.arange(40),x,s=5,alpha=0.5)
+    ax.scatter(range(25), x, s=5, alpha=0.5)
 
-ax.plot(mean_diff,'b-',label='Asyn',alpha=0.8,lw=3)
+ax.plot(mean_diff, 'b-', label='Asyn', alpha=0.8, lw=3)
 ax.set_xlabel('Time step')
 ax.set_ylabel('Number of adopters')
-ax.set_xlim([0,40])
-ax.set_ylim([0,np.max(diff_cont)*1.2])
+ax.set_xlim([0, 25])
+ax.set_ylim([0, np.max(diff_cont)*1.2])
 ax.legend(loc='best')
 plt.show()
-'''

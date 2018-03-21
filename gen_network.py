@@ -103,5 +103,5 @@ if __name__ == '__main__':
     pk_list = g_pk.get_pk()
     g_graph = gener_random_graph(n, k_list, pk_list)
     random_network = g_graph.generate()
-    print nx.number_of_nodes(random_network), nx.number_of_edges(random_network)
-    print g_graph.pk_list, sum(g_graph.pk_list)
+    print(nx.number_of_nodes(random_network), nx.number_of_edges(random_network))
+    print(g_graph.pk_list, sum(g_graph.pk_list))
