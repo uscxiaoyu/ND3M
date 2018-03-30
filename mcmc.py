@@ -86,7 +86,7 @@ class Gibbs_samp:
         p, q, c, d, g = self.ini_values
         params = [p, q, c, d, g]
         likel = self.loglike(self.ini_values)
-        for i in xrange(num_samp):
+        for i in range(num_samp):
             u_p = 0.0001 + 0.08 * random()
             u_q = 0.001 + 0.4 * random()
             u_c = 0.2 + 0.8 * random()
@@ -104,7 +104,7 @@ class Gibbs_samp:
 
             self.samp_cont.append(params)
             if time.clock() - t1 > 600:
-                print u'[%-20s]耗时%d秒' % (int(i / num_samp * 20) * '>', time.clock()-t2)
+                print('[%-20s]耗时%d秒' % (int(i / num_samp * 20) * '>', time.clock()-t2))
                 t1 = time.clock()
 
 if __name__ == '__main__':
@@ -124,9 +124,9 @@ if __name__ == '__main__':
     m = 20000
     t1 = time.clock()
     g_samp = Gibbs_samp(s=s, m=m, ini_values=ini_values, k_list=k_list)
-    g_samp.sample(num_samp = 5000000)
+    g_samp.sample(num_samp = 500000)
     np.save('gibbs(room air conditioners)', g_samp.samp_cont)
-    print u'完成，一共用时%d秒'%(time.clock() - t1)
+    print('完成，一共用时%d秒' % (time.clock() - t1))
 
     '''
         k_list = np.arange(1, 50)

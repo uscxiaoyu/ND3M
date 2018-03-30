@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import time
 
-np.random.seed(1234)  #规定初始随机数，以使实验可重复
+#np.random.seed(1234)  #规定初始随机数，以使实验可重复
 
 class Gener_PK:
     c = 1.2
@@ -73,7 +73,9 @@ class GMM:  # gaussian mixture model
         f = np.zeros_like(self.k_list, dtype=np.float64)
         theta = 0
         for i in range(self.s_len):
-            delta_f = c * (1 - f) * (1 - (1 - p) * (1 - q) ** (self.k_list * theta))  # 各k对应的采纳率增长
+            #dose = 1 - (1 - p) * (1 - q) ** (self.k_list * theta)  # 各k对应的采纳率增长
+            dose = np.array([p + q * k * theta if p + q * k * theta < 1 else 1 for k in self.k_list])
+            delta_f = c * (1 - f) * dose
             inst_diff[i] = np.dot(delta_f, pk)  # 添加i+1时间步下的总采纳率增长
             f = f + delta_f  # 各k对应的采纳率
             theta = np.sum(self.k_list * pk * f) / np.dot(pk, self.k_list)  # 计算平均影响率
@@ -106,10 +108,8 @@ class GMM:  # gaussian mixture model
             return - (self.m - sum(self.s)) * log(1 - sum(ins)) - np.dot(self.s, log(ins))
 
     def optima_search1(self):  # 针对(p, q, c)优化
-        bounds = ((1e-4, 0.1), (0.001, 1), (0.01, 0.9))
+        bounds = ((1e-4, 0.1), (0.001, 1), (0.01, 1))
         sol = minimize(self.neg_loglike1, self.x, bounds=bounds, method='SLSQP')
-        #sol = differential_evolution(self.neg_loglike1, bounds=bounds)
-        #sol = basinhopping(self.neg_loglike1, self.x)
         self.x = np.array(sol.x)
         return sol.fun  # [neg_loglike, p, q, c]
 
@@ -133,7 +133,7 @@ class GMM:  # gaussian mixture model
         res2 = self.optima_search2()
         res_cont = [(res2, self.x, self.p_list)]
         if np.isnan(res2):
-            return (np.inf, self.x, self.p_list)
+            return np.inf, self.x, self.p_list
         else:
             for i in range(iters):
                 self.optima_search1()  # Exceptation
@@ -148,9 +148,10 @@ class GMM:  # gaussian mixture model
 
             return sorted(res_cont)[0]
 
+
 def mul_samp(s, m, num_samp=50):
     gmm = GMM(s, m)
-    ini_rand = np.random.random(3 * num_samp).reshape(num_samp, 3)  #随机生成num_samp个0~1的数
+    ini_rand = np.random.random(3 * num_samp).reshape(num_samp, 3)  # 随机生成num_samp个0~1的数
     ini_rand[:, 0] = ini_rand[:, 0] * 5e-2  # p
     ini_rand[:, 1] = ini_rand[:, 1] * 0.8 + 0.01  # q
     sol_cont = []
@@ -178,13 +179,12 @@ if __name__ == '__main__':
     china_set = {'color tv': (np.arange(1997, 2013),[2.6, 1.2, 2.11, 3.79, 3.6, 7.33, 7.18, 5.29, 8.42, 5.68, 6.57, 5.49, 6.48, 5.42, 10.72, 5.15]),
                  'mobile phone': (np.arange(1997, 2013), [1.7, 1.6, 3.84, 12.36, 14.5, 28.89, 27.18, 21.33, 25.6, 15.88, 12.3, 6.84, 9.02, 7.82, 16.39, 7.39])}
 
-    m_cont = {'clothers dryers': 15960, 'room air conditioners':17581, 'color televisions':38619}
-    t1 = time.clock()
+    m_cont = {'clothers dryers': 22000, 'room air conditioners': 20000, 'color televisions': 45000}
     txt = 'color televisions'
     s = data_set[txt][1]
     m = m_cont[txt]
     t1 = time.clock()
-    sol = mul_samp(s, m, num_samp=20)
+    sol = mul_samp(s, m, num_samp=10)
     res = sorted(sol)[0]
     gmm = GMM(s, m)
     r2 = gmm.r2(res[1], res[2])

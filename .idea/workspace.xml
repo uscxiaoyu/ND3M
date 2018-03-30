@@ -2,11 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6c29f10d-86ab-4d58-b7f7-4ec8f8dd3368" name="Default" comment="试验">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change beforePath="$PROJECT_DIR$/gaussian_mixture_model_2.py" afterPath="$PROJECT_DIR$/gaussian_mixture_model_2.py" />
-      <change beforePath="$PROJECT_DIR$/gen_network.py" afterPath="$PROJECT_DIR$/gen_network.py" />
-      <change beforePath="$PROJECT_DIR$/产生扩散数据集2.py" afterPath="$PROJECT_DIR$/产生扩散数据集2.py" />
+      <change beforePath="$PROJECT_DIR$/gaussian_mixture_model.py" afterPath="$PROJECT_DIR$/gaussian_mixture_model.py" />
+      <change beforePath="$PROJECT_DIR$/mcmc.py" afterPath="$PROJECT_DIR$/mcmc.py" />
+      <change beforePath="$PROJECT_DIR$/产生扩散数据集.py" afterPath="$PROJECT_DIR$/产生扩散数据集.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -17,14 +16,12 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="gaussian_mixture_model_2.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/gaussian_mixture_model_2.py">
+      <file leaf-file-name="gaussian_mixture_model.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/gaussian_mixture_model.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="204">
-              <caret line="12" column="11" lean-forward="false" selection-start-line="12" selection-start-column="11" selection-end-line="12" selection-end-column="11" />
-              <folding>
-                <element signature="e#27#58#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="544">
+              <caret line="76" column="12" lean-forward="true" selection-start-line="76" selection-start-column="12" selection-end-line="76" selection-end-column="12" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -47,15 +44,15 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/gaussian_mixture_model.py" />
         <option value="$USER_HOME$/Jupyter notebook/A-fast-parameter-estimation-method-for-ABM/Estimate_ABM.py" />
         <option value="$PROJECT_DIR$/gen_network.py" />
         <option value="$PROJECT_DIR$/产生扩散数据集2.py" />
         <option value="$PROJECT_DIR$/gaussian_mixture_model_2.py" />
+        <option value="$PROJECT_DIR$/gaussian_mixture_model.py" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="6">
+  <component name="ProjectFrameBounds" extendedState="7">
     <option name="x" value="44" />
     <option name="y" value="-11" />
     <option name="width" value="1637" />
@@ -215,9 +212,9 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="44" y="-11" width="1637" height="1062" extended-state="6" />
+    <frame x="44" y="-11" width="1637" height="1062" extended-state="7" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.10446822" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.219635" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32962137" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="true" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.29641283" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -277,26 +274,17 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/gaussian_mixture_model_2.py">
+    <entry file="file://$PROJECT_DIR$/gaussian_mixture_model.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#27#58#0" expanded="true" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/gaussian_mixture_model_2.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#27#58#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/gaussian_mixture_model_2.py" />
+    <entry file="file://$PROJECT_DIR$/gaussian_mixture_model_2.py" />
+    <entry file="file://$PROJECT_DIR$/gaussian_mixture_model_2.py" />
     <entry file="file://$USER_HOME$/Jupyter notebook/A-fast-parameter-estimation-method-for-ABM/Estimate_ABM.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -311,16 +299,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/gaussian_mixture_model_2.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#27#58#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/gaussian_mixture_model_2.py" />
     <entry file="file://$USER_HOME$/Jupyter notebook/A-fast-parameter-estimation-method-for-ABM/Estimate_ABM.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="3162">
@@ -328,16 +307,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/gaussian_mixture_model_2.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#27#58#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/gaussian_mixture_model_2.py" />
     <entry file="file://$PROJECT_DIR$/gaussian_mixture_model.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -366,20 +336,12 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/gaussian_mixture_model_2.py" />
     <entry file="file://$PROJECT_DIR$/gaussian_mixture_model.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2074">
-          <caret line="39" column="75" lean-forward="false" selection-start-line="39" selection-start-column="75" selection-end-line="39" selection-end-column="75" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/gaussian_mixture_model_2.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="204">
-          <caret line="12" column="11" lean-forward="false" selection-start-line="12" selection-start-column="11" selection-end-line="12" selection-end-column="11" />
-          <folding>
-            <element signature="e#27#58#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="544">
+          <caret line="76" column="12" lean-forward="true" selection-start-line="76" selection-start-column="12" selection-end-line="76" selection-end-column="12" />
+          <folding />
         </state>
       </provider>
     </entry>
