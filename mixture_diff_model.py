@@ -1,7 +1,8 @@
+#for python3
 #coding=utf-8
 from __future__ import division
 from numpy import exp,pi,sqrt,log
-from scipy.optimize import minimize, root
+from scipy.optimize import minimize, root, differential_evolution, basinhopping
 import matplotlib.pyplot as plt
 import numpy as np
 import time
@@ -50,7 +51,7 @@ class Gener_PK:
         return p_k
 
 
-class GMM:  # mixture of network-based model
+class GMM:  # gaussian mixture model
 
     def __init__(self, s, m, k_list=np.arange(1, 50)):
         self.s = s
@@ -58,9 +59,10 @@ class GMM:  # mixture of network-based model
         self.m = m
         self.k_list = k_list
         self.pk_cont = []
+        self.g_list = [0, 1, 2, 3]
         self.p_list = 0.25 * np.ones(4)
         self.x = np.array([0.001, 0.1, 0.5])
-        for i in [0, 1, 2, 3]:
+        for i in self.g_list:
             gener_pk = Gener_PK(d=6, g=i, k_list=self.k_list)
             pk = gener_pk.get_pk()
             self.pk_cont.append(pk)
@@ -72,8 +74,8 @@ class GMM:  # mixture of network-based model
         f = np.zeros_like(self.k_list, dtype=np.float64)
         theta = 0
         for i in range(self.s_len):
-            #dose = 1 - (1 - p) * (1 - q) ** (self.k_list * theta)  # 各k对应的采纳率增长
-            dose = np.array([p + q * k * theta if p + q * k * theta < 1 else 1 for k in self.k_list])
+            dose = 1 - (1 - p) * (1 - q) ** (self.k_list * theta)  # 各k对应的采纳率增长
+            #dose = np.array([p + q * k * theta if p + q * k * theta < 1 else 1 for k in self.k_list])
             delta_f = c * (1 - f) * dose
             inst_diff[i] = np.dot(delta_f, pk)  # 添加i+1时间步下的总采纳率增长
             f = f + delta_f  # 各k对应的采纳率
@@ -92,23 +94,24 @@ class GMM:  # mixture of network-based model
         r_2 = (ssl - sse) / ssl
         return r_2
 
-    def neg_loglike1(self, x):  # 负对数似然函数, 以(p, q, c)作为参数
-        ins = self.mix_func(x, self.p_list)
+    def neg_logli(self, x, g):
+        ins = self.func(x, g)
         if sum(ins) <= 0 or sum(ins) >= 1:
             return np.inf
         else:
-            return - (self.m - sum(self.s)) * log(1 - sum(ins)) - np.dot(self.s, log(ins))
+            return -(self.m - sum(self.s)) * log(1 - sum(ins)) - np.dot(self.s, log(ins))
 
-    def neg_loglike2(self, p_list):  # 负对数似然函数, 以p_list作为参数
-        ins = self.mix_func(self.x, p_list)
-        if sum(ins) <= 0 or sum(ins) >= 1:
-            return np.inf
-        else:
-            return - (self.m - sum(self.s)) * log(1 - sum(ins)) - np.dot(self.s, log(ins))
+    def mix_neglogli_1(self, x):  # 负对数似然函数, 以(p, q, c)作为参数
+        value_neglog = [self.neg_logli(x, g) for g in self.g_list]
+        return np.dot(self.p_list, value_neglog)
+
+    def mix_neglogli_2(self, p_list):  # 负对数似然函数, 以p_list作为参数
+        value_neglog = [self.neg_logli(self.x, g) for g in self.g_list]
+        return np.dot(p_list, value_neglog)
 
     def optima_search1(self):  # 针对(p, q, c)优化
         bounds = ((1e-4, 0.1), (0.001, 1), (0.01, 1))
-        sol = minimize(self.neg_loglike1, self.x, bounds=bounds, method='SLSQP')
+        sol = minimize(self.mix_neglogli_1, self.x, bounds=bounds, method='SLSQP')
         self.x = np.array(sol.x)
         return sol.fun  # [neg_loglike, p, q, c]
 
@@ -123,11 +126,11 @@ class GMM:  # mixture of network-based model
                 {'type': 'ineq', 'fun': lambda x: x[3]},
                 {'type': 'ineq', 'fun': lambda x: 1 - x[3]})
 
-        sol = minimize(self.neg_loglike2, self.p_list, constraints=cons, method='SLSQP')
+        sol = minimize(self.mix_neglogli_2, self.p_list, constraints=cons, method='SLSQP')
         self.p_list = np.array(sol.x)
         return sol.fun  # [neg_loglike, p, q, c]
 
-    def excep_max(self, iters=20, threshold=1e-5):
+    def excep_max(self, iters=10, threshold=1e-5):
         self.optima_search1()
         res2 = self.optima_search2()
         res_cont = [(res2, self.x, self.p_list)]
@@ -139,7 +142,7 @@ class GMM:  # mixture of network-based model
                 res2 = self.optima_search2()  # Maximization
                 res_cont.append((res2, self.x, self.p_list))
                 flag = abs(res_cont[-2][0] - res_cont[-1][0]) / res_cont[-1][0]
-                # print('EM--%d:{%.2f, %.2f}' % (i+1, res_cont[-2][0], res_cont[-1][0]), 'Flag: %.2e' % flag)
+                #print('EM--%d:{%.2f, %.2f}' % (i + 1, res_cont[-2][0], res_cont[-1][0]), 'Flag: %.2e' % flag)
                 if flag < threshold:
                     break
             else:
@@ -179,7 +182,7 @@ if __name__ == '__main__':
                  'mobile phone': (np.arange(1997, 2013), [1.7, 1.6, 3.84, 12.36, 14.5, 28.89, 27.18, 21.33, 25.6, 15.88, 12.3, 6.84, 9.02, 7.82, 16.39, 7.39])}
 
     m_cont = {'clothers dryers': 22000, 'room air conditioners': 20000, 'color televisions': 45000}
-    txt = 'color televisions'
+    txt = 'clothers dryers'
     s = data_set[txt][1]
     m = m_cont[txt]
     t1 = time.clock()
