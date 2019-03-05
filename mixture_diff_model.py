@@ -1,13 +1,11 @@
-#for python3
 #coding=utf-8
-from __future__ import division
 from numpy import exp,pi,sqrt,log
 from scipy.optimize import minimize, root, differential_evolution, basinhopping
 import matplotlib.pyplot as plt
 import numpy as np
 import time
 
-#np.random.seed(1234)  #规定初始随机数，以使实验可重复
+np.random.seed(1234)  #规定初始随机数，以使实验可重复
 
 class Gener_PK:
     c = 1.2
@@ -51,7 +49,7 @@ class Gener_PK:
         return p_k
 
 
-class GMM:  # gaussian mixture model
+class Mix_Netw_Modle:  # gaussian mixture model
 
     def __init__(self, s, m, k_list=np.arange(1, 50)):
         self.s = s
@@ -152,7 +150,7 @@ class GMM:  # gaussian mixture model
 
 
 def mul_samp(s, m, num_samp=50):
-    gmm = GMM(s, m)
+    gmm = Mix_Netw_Modle(s, m)
     ini_rand = np.random.random(3 * num_samp).reshape(num_samp, 3)  # 随机生成num_samp个0~1的数
     ini_rand[:, 0] = ini_rand[:, 0] * 5e-2  # p
     ini_rand[:, 1] = ini_rand[:, 1] * 0.8 + 0.01  # q
@@ -171,32 +169,38 @@ def mul_samp(s, m, num_samp=50):
 
 
 if __name__ == '__main__':
-    data_set = {'room air conditioners': (np.arange(1949, 1962), [96, 195, 238, 380, 1045, 1230, 1267, 1828, 1586, 1673, 1800, 1580, 1500]),
+    data_set = {'room air conditioners': (np.arange(1949, 1962), [96, 195, 238, 380, 1045, 1230, 1267, 1828, 1586,
+                                                                  1673, 1800, 1580, 1500]),
                 'color televisions': (np.arange(1963, 1971), [747, 1480, 2646, 5118, 5777, 5982, 5962, 4631]),
-                'clothers dryers': (np.arange(1949, 1962), [106, 319, 492, 635, 737, 890, 1397, 1523, 1294, 1240, 1425, 1260, 1236]),
+                'clothers dryers': (np.arange(1949, 1962), [106, 319, 492, 635, 737, 890, 1397, 1523, 1294, 1240,
+                                                            1425, 1260, 1236]),
                 'ultrasound': (np.arange(1965, 1979), [5, 3, 2, 5, 7, 12, 6, 16, 16, 28, 28, 21, 13, 6]),
                 'mammography': (np.arange(1965, 1979), [2, 2, 2, 3, 4, 9, 7, 16, 23, 24, 15, 6, 5, 1]),
-                'foreign language': (np.arange(1952, 1964), [1.25, 0.77, 0.86, 0.48, 1.34, 3.56, 3.36, 6.24, 5.95, 6.24, 4.89, 0.25]),
-                'accelerated program': (np.arange(1952, 1964), [0.67, 0.48, 2.11, 0.29, 2.59, 2.21, 16.80, 11.04, 14.40, 6.43, 6.15, 1.15])}
-    china_set = {'color tv': (np.arange(1997, 2013),[2.6, 1.2, 2.11, 3.79, 3.6, 7.33, 7.18, 5.29, 8.42, 5.68, 6.57, 5.49, 6.48, 5.42, 10.72, 5.15]),
-                 'mobile phone': (np.arange(1997, 2013), [1.7, 1.6, 3.84, 12.36, 14.5, 28.89, 27.18, 21.33, 25.6, 15.88, 12.3, 6.84, 9.02, 7.82, 16.39, 7.39])}
+                'foreign language': (np.arange(1952, 1964), [1.25, 0.77, 0.86, 0.48, 1.34, 3.56, 3.36, 6.24, 5.95,
+                                                             6.24, 4.89, 0.25]),
+                'accelerated program': (np.arange(1952, 1964), [0.67, 0.48, 2.11, 0.29, 2.59, 2.21, 16.80, 11.04,
+                                                                14.40, 6.43, 6.15, 1.15])}
+    china_set = {'color tv': (np.arange(1997, 2013),[2.6, 1.2, 2.11, 3.79, 3.6, 7.33, 7.18, 5.29, 8.42, 5.68, 6.57,
+                                                     5.49, 6.48, 5.42, 10.72, 5.15]),
+                 'mobile phone': (np.arange(1997, 2013), [1.7, 1.6, 3.84, 12.36, 14.5, 28.89, 27.18, 21.33, 25.6,
+                                                          15.88, 12.3, 6.84, 9.02, 7.82, 16.39, 7.39])}
 
-    m_cont = {'clothers dryers': 22000, 'room air conditioners': 20000, 'color televisions': 45000}
-    txt = 'clothers dryers'
+    m_cont = {'clothers dryers': 25000, 'room air conditioners': 20000, 'color televisions': 45000}
+    txt = 'room air conditioners'
     s = data_set[txt][1]
     m = m_cont[txt]
     t1 = time.clock()
     sol = mul_samp(s, m, num_samp=10)
     res = sorted(sol)[0]
-    gmm = GMM(s, m)
-    r2 = gmm.r2(res[1], res[2])
+    mnm = Mix_Netw_Modle(s, m)
+    r2 = mnm.r2(res[1], res[2])
     print('CASE:%s' % txt)
     print('-Loglikelihood: %.2f' % res[0], 'r2:%.4f' % r2, 'p:%.4f, q:%.4f, c:%.4f' % tuple(res[1]),
           'Ba: %.4f, Gauss: %.4f, Logno:%.4f, Expon:%.4f' % tuple(res[2]), sep='\n')
     print('Time elapsed: %2.f s'%(time.clock() - t1))
 
     # 绘图
-    diff_curve = gmm.mix_func(res[1], res[2]) * m
+    diff_curve = mnm.mix_func(res[1], res[2]) * m
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(diff_curve, 'k-', lw=1.5)

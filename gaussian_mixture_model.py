@@ -1,6 +1,6 @@
 #coding=utf-8
 from __future__ import division
-from numpy import exp,pi,sqrt,log
+from numpy import exp, pi, sqrt, log
 from scipy.optimize import minimize, root
 import matplotlib.pyplot as plt
 import numpy as np
@@ -72,7 +72,7 @@ class GMM:  # mixture of network-based model
         f = np.zeros_like(self.k_list, dtype=np.float64)
         theta = 0
         for i in range(self.s_len):
-            #dose = 1 - (1 - p) * (1 - q) ** (self.k_list * theta)  # 各k对应的采纳率增长
+            # dose = 1 - (1 - p) * (1 - q) ** (self.k_list * theta)  # 各k对应的采纳率增长
             dose = np.array([p + q * k * theta if p + q * k * theta < 1 else 1 for k in self.k_list])
             delta_f = c * (1 - f) * dose
             inst_diff[i] = np.dot(delta_f, pk)  # 添加i+1时间步下的总采纳率增长
@@ -168,17 +168,23 @@ def mul_samp(s, m, num_samp=50):
 
 
 if __name__ == '__main__':
-    data_set = {'room air conditioners': (np.arange(1949, 1962), [96, 195, 238, 380, 1045, 1230, 1267, 1828, 1586, 1673, 1800, 1580, 1500]),
+    data_set = {'room air conditioners': (np.arange(1949, 1962), [96, 195, 238, 380, 1045, 1230, 1267, 1828, 1586,
+                                                                  1673, 1800, 1580, 1500]),
                 'color televisions': (np.arange(1963, 1971), [747, 1480, 2646, 5118, 5777, 5982, 5962, 4631]),
-                'clothers dryers': (np.arange(1949, 1962), [106, 319, 492, 635, 737, 890, 1397, 1523, 1294, 1240, 1425, 1260, 1236]),
+                'clothers dryers': (np.arange(1949, 1962), [106, 319, 492, 635, 737, 890, 1397, 1523, 1294, 1240,
+                                                            1425, 1260, 1236]),
                 'ultrasound': (np.arange(1965, 1979), [5, 3, 2, 5, 7, 12, 6, 16, 16, 28, 28, 21, 13, 6]),
                 'mammography': (np.arange(1965, 1979), [2, 2, 2, 3, 4, 9, 7, 16, 23, 24, 15, 6, 5, 1]),
-                'foreign language': (np.arange(1952, 1964), [1.25, 0.77, 0.86, 0.48, 1.34, 3.56, 3.36, 6.24, 5.95, 6.24, 4.89, 0.25]),
-                'accelerated program': (np.arange(1952, 1964), [0.67, 0.48, 2.11, 0.29, 2.59, 2.21, 16.80, 11.04, 14.40, 6.43, 6.15, 1.15])}
-    china_set = {'color tv': (np.arange(1997, 2013),[2.6, 1.2, 2.11, 3.79, 3.6, 7.33, 7.18, 5.29, 8.42, 5.68, 6.57, 5.49, 6.48, 5.42, 10.72, 5.15]),
-                 'mobile phone': (np.arange(1997, 2013), [1.7, 1.6, 3.84, 12.36, 14.5, 28.89, 27.18, 21.33, 25.6, 15.88, 12.3, 6.84, 9.02, 7.82, 16.39, 7.39])}
+                'foreign language': (np.arange(1952, 1964), [1.25, 0.77, 0.86, 0.48, 1.34, 3.56, 3.36, 6.24, 5.95,
+                                                             6.24, 4.89, 0.25]),
+                'accelerated program': (np.arange(1952, 1964), [0.67, 0.48, 2.11, 0.29, 2.59, 2.21, 16.80, 11.04,
+                                                                14.40, 6.43, 6.15, 1.15])}
+    china_set = {'color tv': (np.arange(1997, 2013),[2.6, 1.2, 2.11, 3.79, 3.6, 7.33, 7.18, 5.29, 8.42, 5.68, 6.57,
+                                                     5.49, 6.48, 5.42, 10.72, 5.15]),
+                 'mobile phone': (np.arange(1997, 2013), [1.7, 1.6, 3.84, 12.36, 14.5, 28.89, 27.18, 21.33, 25.6,
+                                                          15.88, 12.3, 6.84, 9.02, 7.82, 16.39, 7.39])}
 
-    m_cont = {'clothers dryers': 22000, 'room air conditioners': 20000, 'color televisions': 45000}
+    m_cont = {'clothers dryers': 25000, 'room air conditioners': 20000, 'color televisions': 45000}
     txt = 'color televisions'
     s = data_set[txt][1]
     m = m_cont[txt]
